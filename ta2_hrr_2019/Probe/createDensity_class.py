@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""    _ 
+"""    _
       /  |     | __  _ __  _
      /   |    /  |_||_|| ||
     /    |   /   |  |\ | ||_
    /____ |__/\ . |  | \|_|\_|
    __________________________ .
-   
+
 Created on Wed Jun 19 09:38:20 2019
 
 @author: chrisunderwood
@@ -19,16 +19,21 @@ mpl.rcParams['figure.figsize'] = [8.0, 4.0]
 import matplotlib.pyplot as plt
 
 # Load my module of functions
-import CUnderwood_Functions3 as func
+# Load my module of functions
+import mirage_analysis
+import ta2_hrr_2019.utils
+ta2_hrrta2_hrr_2019.utils.setup_mirage_analysis()
+from ta2_hrrta2_hrr_2019.utils.Probe import CUnderwood_Functions3 as func
+
 from scipy.optimize import curve_fit
 import abel
 
 
 class deltaPhaseToDensity():
-    
+
     def __init__(self, laserwavelength_m, mPerPix):
         self.constants(laserwavelength_m, mPerPix)
-        
+
     def constants(self, laserwavelength_m, mPerPix):
         self.lambda_l = laserwavelength_m
         self.mu_0 =  12.57e-7
@@ -37,12 +42,12 @@ class deltaPhaseToDensity():
         self.e_0 = 8.85e-12
         self.c = 3e8
         self.sizePerPixel = mPerPix
-        
-        self.w_0 = (2 * np.pi * self.c ) / self.lambda_l
-        self.n_c = (self.w_0**2 * self.m_e * self.e_0) / self.q_e**2   
 
-        self.r_e = 2.81794e-15        
-    
+        self.w_0 = (2 * np.pi * self.c ) / self.lambda_l
+        self.n_c = (self.w_0**2 * self.m_e * self.e_0) / self.q_e**2
+
+        self.r_e = 2.81794e-15
+
     def load_data(self, filePath, plotting = False):
         import loadDataToNumpy_class
         ld = loadDataToNumpy_class.loadInDataToNumpy(filePath)
@@ -55,39 +60,39 @@ class deltaPhaseToDensity():
                        norm = func.MidpointNormalize(midpoint = 0))
             plt.colorbar()
             plt.show()
-            
+
     def load_arrIntoClass(self, arr):
         self.phase = arr
-        self.phaseShape = np.shape(self.phase)             
-            
-    
+        self.phaseShape = np.shape(self.phase)
+
+
     def inverse_abel_transform(self, plotting = False, method = "hansenlaw"):
         # Flip the image, so the abel transform work
         image = self.phase.T
-        
+
         # Using the inbuilt gaussian method to find the axis
         self.inverse_abel = abel.Transform(image,
                                       #center = (50, 200),
-                                      method =  method, 
+                                      method =  method,
                                       center = "gaussian",
                                       center_options = {'axes' : 1, "verbose":True},
-                                      direction='inverse', verbose = True).transform.T        
-            
+                                      direction='inverse', verbose = True).transform.T
+
         if plotting:
-            plt.figure(figsize = (8,4))            
-            plt.imshow(self.inverse_abel, cmap = plt.cm.seismic, 
+            plt.figure(figsize = (8,4))
+            plt.imshow(self.inverse_abel, cmap = plt.cm.seismic,
                    norm = func.MidpointNormalize(midpoint = 0),
-                   ) 
+                   )
             cbar = plt.colorbar()
             cbar.set_label("Raw Abel Transform")
             plt.title("Inverse Abel Transform")
             plt.xlabel("Pixels")
-            plt.ylabel("Pixels")        
+            plt.ylabel("Pixels")
             plt.show()
 
             lineout_ave = np.average(self.inverse_abel[ 10:-10, :], axis = 0)
             plt.figure(figsize = (8,4))
-            
+
             plt.plot(np.arange(len(lineout_ave)) * self.sizePerPixel * 1e3, lineout_ave)
             plt.xlabel("Distance (mm)")
             plt.show()
@@ -95,20 +100,20 @@ class deltaPhaseToDensity():
     def convert_Inverse_Abel_to_Ne(self, plotting = True, pixelsAroundPlasmaChannel = 10):
         perCm3 = False
         if perCm3: self.inverse_abel *= 1e-6
-        
+
         # Using N_e = 1/(r_e * l) * pyabelInverse, from chat with Rob Shaloo
-    
+
         self.n_e = self.inverse_abel / (self.r_e *  self.lambda_l * self.sizePerPixel)
-        
+
         # Take an average cropping to the center, this could be cleverer
-        
+
         print ("Taking average lineout in region of size {}mm around axis".format(2 * pixelsAroundPlasmaChannel * self.sizePerPixel *1e3))
-        lineout_ave = np.average(self.n_e[ self.phaseShape[0]//2 - pixelsAroundPlasmaChannel: self.phaseShape[0]//2 + pixelsAroundPlasmaChannel, :], 
+        lineout_ave = np.average(self.n_e[ self.phaseShape[0]//2 - pixelsAroundPlasmaChannel: self.phaseShape[0]//2 + pixelsAroundPlasmaChannel, :],
                                  axis = 0)
         if plotting:
             f, ax = plt.subplots(nrows=2, sharex = True, figsize = (8,6))
             ax[0].set_title("Number Density")
-            im1 = ax[0].pcolormesh( 
+            im1 = ax[0].pcolormesh(
                     np.arange(self.phaseShape[1]) * self.sizePerPixel *1e3,
                     np.arange(self.phaseShape[0]) * self.sizePerPixel *1e3 - self.phaseShape[0] * 0.5 * self.sizePerPixel *1e3,
                     self.n_e, cmap = plt.cm.seismic,
@@ -116,14 +121,14 @@ class deltaPhaseToDensity():
             for height in [self.phaseShape[0]//2 - pixelsAroundPlasmaChannel - self.phaseShape[0] * 0.5, self.phaseShape[0]//2 + pixelsAroundPlasmaChannel - self.phaseShape[0] * 0.5]:
                 print (self.phaseShape, height)
                 ax[0].hlines(height * self.sizePerPixel *1e3, 0, self.phaseShape[1]* self.sizePerPixel *1e3)
-            
+
             cax = f.add_axes([0.95, 0.25, 0.05, 0.5])
             plt.colorbar(im1, cax = cax)
             ax[1].plot(np.arange(len(lineout_ave)) * self.sizePerPixel *1e3, lineout_ave)
             ax[1].set_xlabel("Distance (mm)")
             ax[1].set_ylim([0, None])
-            plt.show()        
-            
+            plt.show()
+
         return self.n_e, np.c_[np.arange(len(lineout_ave)) * self.sizePerPixel *1e3, lineout_ave]
 
 if __name__ == "__main__":
@@ -139,7 +144,5 @@ if __name__ == "__main__":
     # rhoCalc.cropPhaseToCenter([midpoint - widen, midpoint + widen, 0, 300])
     # rhoCalc.shift_to_centre()
     rhoCalc.inverse_abel_transform(plotting = False)
-    
+
     _ = rhoCalc.convert_Inverse_Abel_to_Ne()
-    
-    

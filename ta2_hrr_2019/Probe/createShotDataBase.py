@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""    _ 
+"""    _
       /  |     | __  _ __  _
      /   |    /  |_||_|| ||
     /    |   /   |  |\ | ||_
    /____ |__/\ . |  | \|_|\_|
    __________________________ .
-   
+
 Created on Wed Jun 19 09:49:52 2019
 
 @author: chrisunderwood
@@ -17,7 +17,11 @@ mpl.rcParams['figure.figsize'] = [6.0,4.0]
 import matplotlib.pyplot as plt
 
 # Load my module of functions
-import CUnderwood_Functions3 as func
+# Load my module of functions
+import mirage_analysis
+import ta2_hrr_2019.utils
+ta2_hrrta2_hrr_2019.utils.setup_mirage_analysis()
+from ta2_hrrta2_hrr_2019.utils.Probe import CUnderwood_Functions3 as func
 
 savePath = "/Volumes/GoogleDrive/My Drive/Experimental_Codes/Interferometry_Data_Extraction/"
 
@@ -74,7 +78,5 @@ for run in runFolders:
     for filePath in outputData[run]:
         shotNumber = filePath.split("/")[-1].split("s")[1].split("_")[0]
         outFile.write("{},{},{},{},0, , ,,,,,,,,,,,,,,,,,,,,{},{}\n".format(day, runNos, shotNumber, filePath, laserwavelength, sizePerPixel))
-        
+
 outFile.close()
-
-

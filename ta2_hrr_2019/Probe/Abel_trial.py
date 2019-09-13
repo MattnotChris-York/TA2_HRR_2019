@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""    _ 
+"""    _
       /  |     | __  _ __  _
      /   |    /  |_||_|| ||
     /    |   /   |  |\ | ||_
    /____ |__/\ . |  | \|_|\_|
    __________________________ .
-   
+
 Created on Fri Jul  5 16:30:35 2019
 
 @author: chrisunderwood
@@ -16,8 +16,12 @@ import matplotlib as mpl
 mpl.rcParams['figure.figsize'] = [6.0,4.0]
 import matplotlib.pyplot as plt
 import abel
+
+import mirage_analysis
+import ta2_hrr_2019.utils
+ta2_hrrta2_hrr_2019.utils.setup_mirage_analysis()
 # Load my module of functions
-import CUnderwood_Functions3 as func
+from ta2_hrrta2_hrr_2019.utils.Probe import CUnderwood_Functions3 as func
 
 xsize = 20
 ysize = 30
